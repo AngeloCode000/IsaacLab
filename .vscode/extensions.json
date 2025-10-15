@@ -1,12 +1,17 @@
 {
-	// See http://go.microsoft.com/fwlink/?LinkId=827846
-	// for the documentation about the extensions.json format
-	"recommendations": [
-		"ms-vscode.cpptools",
-		"ms-python.python",
-        "ms-python.vscode-pylance",
-		"ban.spellright",
-		"ms-iot.vscode-ros",
-		"ExecutableBookProject.myst-highlight",
-	]
+  "python.defaultInterpreterPath": "/home/eppl/isaacsim/kit/python/bin/python3",
+  "python.analysis.extraPaths": [
+    // Isaac Lab source
+    "${workspaceFolder}/source",
+    "${workspaceFolder}/source/isaaclab",
+    // Isaac Sim Python site-packages
+    "${workspaceFolder}/_isaac_sim/kit/python/lib/python3.11/site-packages",
+    // Isaac Sim extensions (for omni.*, carb.*, etc.)
+    "${workspaceFolder}/_isaac_sim/exts",
+    "${workspaceFolder}/_isaac_sim/extscache",
+    "${workspaceFolder}/_isaac_sim/apps"
+  ],
+  "python.analysis.useLibraryCodeForTypes": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.experiments.enabled": false
 }
