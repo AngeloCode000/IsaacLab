@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from isaaclab.utils import configclass
-
 from isaaclab.managers import SceneEntityCfg
 
 from isaaclab_tasks.manager_based.locomotion.velocity.velocity_env_cfg import LocomotionVelocityRoughEnvCfg
@@ -29,7 +28,9 @@ class OpenMuttRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         if self.scene.height_scanner is not None:
             self.scene.height_scanner.prim_path = "{ENV_REGEX_NS}/Robot/MASTER/base_link"
         if self.scene.contact_forces is not None:
-            self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/Robot/.*"
+            self.scene.contact_forces.prim_path = (
+                "{ENV_REGEX_NS}/Robot/MASTER/(base_link|Leg_.*|SD_.*|Cycloidal_.*|Body_.*)"
+            )
 
         # softer actions while bringing up a new robot
         self.actions.joint_pos.scale = 0.2
