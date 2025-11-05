@@ -38,3 +38,10 @@ class OpenMuttRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         desired_kl=0.01,
         max_grad_norm=1.0,
     )
+
+
+@configclass
+class OpenMuttFlatPPORunnerCfg(OpenMuttRoughPPORunnerCfg):
+    """PPO hyper-parameters for the flat-terrain OpenMutt experiments."""
+
+    experiment_name = "openmutt_flat"
