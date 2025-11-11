@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+import math
+
 from isaaclab.utils import configclass
 from isaaclab.managers import SceneEntityCfg
 
@@ -67,6 +69,10 @@ class OpenMuttRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
             self.terminations.base_contact.params["sensor_cfg"] = SceneEntityCfg(
                 "contact_forces", body_names="base_link"
             )
+
+        # Quick shim: rotate velocity commands so +X requests align with the robot's +Y-forward base.
+        # Set back to 0.0 if the USD is re-exported with IsaacLab's +X-forward convention.
+        self.commands.base_velocity.frame_yaw_offset = math.pi / 2
 
 
 @configclass
