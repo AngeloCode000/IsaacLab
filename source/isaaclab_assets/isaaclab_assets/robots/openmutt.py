@@ -20,7 +20,7 @@ OpenMuttCfg = ArticulationCfg(
 
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.55),           # (x, y, z) raise base so feet clear terrain
-        rot=(0.5, 0.5, 0.5, 0.5),  # rotate +90 deg about X to stand upright plus +90 deg about Z (quaternion)
+        rot=(0.707107, 0.707107, 0.0, 0.0),  # rotate +90 deg about X to stand upright (quaternion)
         lin_vel=(0.0, 0.0, 0.0),
         ang_vel=(0.0, 0.0, 0.0),
         # Zero pose to start—adjust if you have a “home” posture.
