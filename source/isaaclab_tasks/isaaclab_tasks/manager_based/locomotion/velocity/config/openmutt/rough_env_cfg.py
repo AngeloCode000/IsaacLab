@@ -70,9 +70,7 @@ class OpenMuttRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
                 "contact_forces", body_names="base_link"
             )
 
-        # Quick shim: rotate velocity commands so +X requests align with the robot's +Y-forward base.
-        # Set back to 0.0 if the USD is re-exported with IsaacLab's +X-forward convention.
-        self.commands.base_velocity.frame_yaw_offset = math.pi / 2
+        # With corrected USD (+X forward), no command-frame shim is required.
 
 
 @configclass

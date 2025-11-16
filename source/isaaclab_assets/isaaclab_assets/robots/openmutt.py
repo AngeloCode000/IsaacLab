@@ -5,22 +5,31 @@ from isaaclab.actuators import ImplicitActuatorCfg
 from isaaclab.assets.articulation import ArticulationCfg
 
 OpenMuttCfg = ArticulationCfg(
-    # This is where the robot will live in the stage at runtime. Keep it consistent with the USD.
-    prim_path="/World/MASTER",
+    # Place robot under the standard env namespace; let tasks clone it per env
+    prim_path="/World/envs/env_.*/Robot",
+    # Explicitly point to the articulation root inside the referenced USD
+    articulation_root_prim_path="/MASTER",
 
     spawn=sim_utils.UsdFileCfg(
-        usd_path="/home/eppl/Downloads/openMutt_IsaacLab/configuration/OpenMuttMasterStage.usd",
+        usd_path="/home/eppl/Downloads/OpenMuttURDF_Master_Revolute/openmutt_master_revolute_absSTAGE_xfwd.usd",
         activate_contact_sensors=True,
+        # Ensure the robot is simulated with gravity and not anchored to the world.
+        rigid_props=sim_utils.RigidBodyPropertiesCfg(
+            disable_gravity=False,
+            kinematic_enabled=False,
+        ),
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
             enabled_self_collisions=True,
             solver_position_iteration_count=12,
             solver_velocity_iteration_count=1,
+            # Ensure the base is not fixed to the world so robot can fall
+            fix_root_link=False,
         ),
     ),
 
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.0, 0.0, 0.55),           # (x, y, z) raise base so feet clear terrain
-        rot=(0.707107, 0.707107, 0.0, 0.0),  # rotate +90 deg about X to stand upright (quaternion)
+        pos=(0.0, 0.0, 0.6),           # (x, y, z) raise base so feet clear terrain
+        rot=(0.0, 0.0, 0.0, 1.0),  # rotate +90 deg about X to stand upright (quaternion)
         lin_vel=(0.0, 0.0, 0.0),
         ang_vel=(0.0, 0.0, 0.0),
         # Zero pose to start—adjust if you have a “home” posture.

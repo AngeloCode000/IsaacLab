@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import math
 import torch
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
@@ -75,28 +74,15 @@ class UniformVelocityCommand(CommandTerm):
         # -- robot
         self.robot: Articulation = env.scene[cfg.asset_name]
 
-        # cache the frame offset for fast reuse
-        self._has_frame_offset = abs(self.cfg.frame_yaw_offset) > 1e-6
-        if self._has_frame_offset:
-            self._cos_frame = math.cos(self.cfg.frame_yaw_offset)
-            self._sin_frame = math.sin(self.cfg.frame_yaw_offset)
-        else:
-            self._cos_frame = 1.0
-            self._sin_frame = 0.0
-
         # create buffers to store the command
         # -- command: x vel, y vel, yaw vel, heading
         self.vel_command_b = torch.zeros(self.num_envs, 3, device=self.device)
         self.heading_target = torch.zeros(self.num_envs, device=self.device)
         self.is_heading_env = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self.is_standing_env = torch.zeros_like(self.is_heading_env)
-        # -- rotated view of the command taking into account the frame offset
-        self._command_cache = torch.zeros_like(self.vel_command_b)
         # -- metrics
         self.metrics["error_vel_xy"] = torch.zeros(self.num_envs, device=self.device)
         self.metrics["error_vel_yaw"] = torch.zeros(self.num_envs, device=self.device)
-        # initialize command cache
-        self._refresh_command_cache()
 
     def __str__(self) -> str:
         """Return a string representation of the command generator."""
@@ -116,7 +102,7 @@ class UniformVelocityCommand(CommandTerm):
     @property
     def command(self) -> torch.Tensor:
         """The desired base velocity command in the base frame. Shape is (num_envs, 3)."""
-        return self._command_cache
+        return self.vel_command_b
 
     """
     Implementation specific functions.
@@ -127,14 +113,11 @@ class UniformVelocityCommand(CommandTerm):
         max_command_time = self.cfg.resampling_time_range[1]
         max_command_step = max_command_time / self._env.step_dt
         # logs data
-        robot_vel_xy = self.robot.data.root_lin_vel_b[:, :2]
-        if self._has_frame_offset:
-            robot_vel_xy = self._rotate_xy(robot_vel_xy)
         self.metrics["error_vel_xy"] += (
-            torch.norm(self.command[:, :2] - robot_vel_xy, dim=-1) / max_command_step
+            torch.norm(self.vel_command_b[:, :2] - self.robot.data.root_lin_vel_b[:, :2], dim=-1) / max_command_step
         )
         self.metrics["error_vel_yaw"] += (
-            torch.abs(self.command[:, 2] - self.robot.data.root_ang_vel_b[:, 2]) / max_command_step
+            torch.abs(self.vel_command_b[:, 2] - self.robot.data.root_ang_vel_b[:, 2]) / max_command_step
         )
 
     def _resample_command(self, env_ids: Sequence[int]):
@@ -153,8 +136,7 @@ class UniformVelocityCommand(CommandTerm):
             self.is_heading_env[env_ids] = r.uniform_(0.0, 1.0) <= self.cfg.rel_heading_envs
         # update standing envs
         self.is_standing_env[env_ids] = r.uniform_(0.0, 1.0) <= self.cfg.rel_standing_envs
-        # make sure command property reflects the new samples
-        self._refresh_command_cache(env_ids)
+        # nothing else to do
 
     def _update_command(self):
         """Post-processes the velocity command.
@@ -177,8 +159,7 @@ class UniformVelocityCommand(CommandTerm):
         # TODO: check if conversion is needed
         standing_env_ids = self.is_standing_env.nonzero(as_tuple=False).flatten()
         self.vel_command_b[standing_env_ids, :] = 0.0
-        # update cached representation (includes frame yaw offset)
-        self._refresh_command_cache()
+        # nothing else to do
 
     def _set_debug_vis_impl(self, debug_vis: bool):
         # set visibility of markers
@@ -208,10 +189,8 @@ class UniformVelocityCommand(CommandTerm):
         base_pos_w = self.robot.data.root_pos_w.clone()
         base_pos_w[:, 2] += 0.5
         # -- resolve the scales and quaternions
-        vel_des_arrow_scale, vel_des_arrow_quat = self._resolve_xy_velocity_to_arrow(self.command[:, :2])
-        vel_arrow_scale, vel_arrow_quat = self._resolve_xy_velocity_to_arrow(
-            self.robot.data.root_lin_vel_b[:, :2], apply_frame_offset=self._has_frame_offset
-        )
+        vel_des_arrow_scale, vel_des_arrow_quat = self._resolve_xy_velocity_to_arrow(self.vel_command_b[:, :2])
+        vel_arrow_scale, vel_arrow_quat = self._resolve_xy_velocity_to_arrow(self.robot.data.root_lin_vel_b[:, :2])
         # display markers
         self.goal_vel_visualizer.visualize(base_pos_w, vel_des_arrow_quat, vel_des_arrow_scale)
         self.current_vel_visualizer.visualize(base_pos_w, vel_arrow_quat, vel_arrow_scale)
@@ -220,18 +199,13 @@ class UniformVelocityCommand(CommandTerm):
     Internal helpers.
     """
 
-    def _resolve_xy_velocity_to_arrow(
-        self, xy_velocity: torch.Tensor, *, apply_frame_offset: bool = False
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def _resolve_xy_velocity_to_arrow(self, xy_velocity: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Converts the XY base velocity command to arrow direction rotation."""
         # obtain default scale of the marker
         default_scale = self.goal_vel_visualizer.cfg.markers["arrow"].scale
         # arrow-scale
         arrow_scale = torch.tensor(default_scale, device=self.device).repeat(xy_velocity.shape[0], 1)
         arrow_scale[:, 0] *= torch.linalg.norm(xy_velocity, dim=1) * 3.0
-        # account for the frame yaw offset when needed (rotates commands CCW for positive offsets)
-        if apply_frame_offset and self._has_frame_offset:
-            xy_velocity = self._rotate_xy(xy_velocity)
         # arrow-direction
         heading_angle = torch.atan2(xy_velocity[:, 1], xy_velocity[:, 0])
         zeros = torch.zeros_like(heading_angle)
@@ -242,30 +216,6 @@ class UniformVelocityCommand(CommandTerm):
 
         return arrow_scale, arrow_quat
 
-    def _refresh_command_cache(self, env_ids: Sequence[int] | torch.Tensor | slice | None = None):
-        """Update cached command after modifying the underlying buffer."""
-        if env_ids is None:
-            env_ids = slice(None)
-        if self._has_frame_offset:
-            rotated_xy = self._rotate_xy(self.vel_command_b[env_ids, :2])
-        else:
-            rotated_xy = self.vel_command_b[env_ids, :2]
-        self._command_cache[env_ids, :2] = rotated_xy
-        self._command_cache[env_ids, 2] = self.vel_command_b[env_ids, 2]
-
-    def _rotate_xy(self, xy_velocity: torch.Tensor) -> torch.Tensor:
-        """Rotate XY velocity by the configured yaw offset."""
-        x = xy_velocity[..., 0]
-        y = xy_velocity[..., 1]
-        rotated_x = self._cos_frame * x - self._sin_frame * y
-        rotated_y = self._sin_frame * x + self._cos_frame * y
-        return torch.stack((rotated_x, rotated_y), dim=-1)
-
-    def rotate_to_command_frame(self, xy_velocity: torch.Tensor) -> torch.Tensor:
-        """Return velocities expressed in the rotated command frame."""
-        if self._has_frame_offset:
-            return self._rotate_xy(xy_velocity)
-        return xy_velocity
 
 
 class NormalVelocityCommand(UniformVelocityCommand):
