@@ -7,10 +7,9 @@ from isaaclab.assets.articulation import ArticulationCfg
 OpenMuttCfg = ArticulationCfg(
     # Place robot under the standard env namespace; let tasks clone it per env
     prim_path="/World/envs/env_.*/Robot",
-    # Explicitly point to the articulation root inside the referenced USD
-    # The USD nests content under a top-level "World" prim, so MASTER is at
-    # "/World/MASTER" within the referenced asset.
-    articulation_root_prim_path="/World/MASTER",
+    # Explicitly target the articulation root in the USD.
+    # The V2 asset places the articulation under '/MASTER'.
+    articulation_root_prim_path="/MASTER",
 
     spawn=sim_utils.UsdFileCfg(
         # Note: filename is case-sensitive; use the exact V2 variant present on disk.
