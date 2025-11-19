@@ -28,10 +28,10 @@ class OpenMuttRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
 
         # align sensor attachments with the robot's base link
         if self.scene.height_scanner is not None:
-            self.scene.height_scanner.prim_path = "{ENV_REGEX_NS}/Robot/MASTER/base_link"
+            self.scene.height_scanner.prim_path = "{ENV_REGEX_NS}/Robot/World/MASTER/base_link"
         if self.scene.contact_forces is not None:
             self.scene.contact_forces.prim_path = (
-                "{ENV_REGEX_NS}/Robot/MASTER/(base_link|Leg_.*|SD_.*|Cycloidal_.*|Body_.*)"
+                "{ENV_REGEX_NS}/Robot/World/MASTER/(base_link|Leg_.*|SD_.*|Cycloidal_.*|Body_.*)"
             )
 
         # softer actions while bringing up a new robot

@@ -8,10 +8,13 @@ OpenMuttCfg = ArticulationCfg(
     # Place robot under the standard env namespace; let tasks clone it per env
     prim_path="/World/envs/env_.*/Robot",
     # Explicitly point to the articulation root inside the referenced USD
-    articulation_root_prim_path="/MASTER",
+    # The USD nests content under a top-level "World" prim, so MASTER is at
+    # "/World/MASTER" within the referenced asset.
+    articulation_root_prim_path="/World/MASTER",
 
     spawn=sim_utils.UsdFileCfg(
-        usd_path="/home/eppl/Downloads/OpenMuttURDF_Master_Revolute/openmutt_master_revolute_absSTAGE_xfwd.usd",
+        # Note: filename is case-sensitive; use the exact V2 variant present on disk.
+        usd_path="/home/eppl/Downloads/OpenMuttURDF_Master_Revolute/openmutt_master_revolute_absSTAGEV2.usd",
         activate_contact_sensors=True,
         # Ensure the robot is simulated with gravity and not anchored to the world.
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
@@ -32,20 +35,20 @@ OpenMuttCfg = ArticulationCfg(
         rot=(0.0, 0.0, 0.0, 1.0),  # rotate +90 deg about X to stand upright (quaternion)
         lin_vel=(0.0, 0.0, 0.0),
         ang_vel=(0.0, 0.0, 0.0),
-        # Zero pose to start—adjust if you have a “home” posture.
+        # Home pose from RViz screenshot, rounded to nearest 0.5 rad.
         joint_pos={
-            "Body_Bearing_1_Revolute_63": 0.0,
             "Body_Bearing_2_Revolute_25": 0.0,
+            "Body_Bearing_1_Revolute_63": 0.0,
             "Body_Bearing_3_Revolute_64": 0.0,
             "Body_Bearing_4_Revolute_65": 0.0,
-            "Cycloidal_Simplified_for_FEA_v1_2_Revolute_99": 0.0,
-            "Cycloidal_Simplified_for_FEA_v1_3_Revolute_100": 0.0,
-            "Cycloidal_Simplified_for_FEA_v1_4_2_Revolute_102": 0.0,
-            "Cycloidal_Simplified_for_FEA_v1_4_4_2_Revolute_101": 0.0,
-            "Leg_Shank_Bushing_1_Revolute_105": 0.0,
-            "Leg_Shank_Bushing_2_1_1_Revolute_106": 0.0,
-            "Leg_Shank_Bushing_2_1_Revolute_103": 0.0,
-            "Leg_Shank_Bushing_2_Revolute_104": 0.0,
+            "Cycloidal_Simplified_for_FEA_v1_2_Revolute_99": -1.0,
+            "Cycloidal_Simplified_for_FEA_v1_3_Revolute_100": 1.0,
+            "Cycloidal_Simplified_for_FEA_v1_4_4_2_Revolute_101": 1.0,
+            "Cycloidal_Simplified_for_FEA_v1_4_2_Revolute_102": 1.0,
+            "Leg_Shank_Bushing_2_1_Revolute_103": -1.5,
+            "Leg_Shank_Bushing_2_Revolute_104": 1.0,
+            "Leg_Shank_Bushing_1_Revolute_105": -1.5,
+            "Leg_Shank_Bushing_2_1_1_Revolute_106": 1.5,
         },
         joint_vel={".*": 0.0},
     ),
