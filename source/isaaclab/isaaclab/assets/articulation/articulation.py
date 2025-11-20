@@ -1445,6 +1445,11 @@ class Articulation(AssetBase):
         if self.cfg.articulation_root_prim_path is not None:
             # The articulation root prim path is specified explicitly, so we can just use this.
             root_prim_path_expr = self.cfg.prim_path + self.cfg.articulation_root_prim_path
+            omni.log.info(
+                f"[Articulation:init] prim_path='{self.cfg.prim_path}',"
+                f" articulation_root='{self.cfg.articulation_root_prim_path}',"
+                f" expr='{root_prim_path_expr.replace('.*','*')}'"
+            )
         else:
             # No articulation root prim path was specified, so we need to search
             # for it. We search for this in the first environment and then
@@ -1483,6 +1488,12 @@ class Articulation(AssetBase):
 
         # check if the articulation was created
         if self._root_physx_view._backend is None:
+            omni.log.error(
+                "[Articulation:init] Failed to create articulation. "
+                f"Computed expr='{root_prim_path_expr.replace('.*','*')}'. "
+                f"cfg.prim_path='{self.cfg.prim_path}', "
+                f"cfg.articulation_root_prim_path='{self.cfg.articulation_root_prim_path}'"
+            )
             raise RuntimeError(f"Failed to create articulation at: {root_prim_path_expr}. Please check PhysX logs.")
 
         if int(get_version()[2]) < 5:

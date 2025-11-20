@@ -6,10 +6,10 @@ from isaaclab.assets.articulation import ArticulationCfg
 
 OpenMuttCfg = ArticulationCfg(
     # Place robot under the standard env namespace; let tasks clone it per env
-    prim_path="/World/envs/env_.*/Robot",
-    # Explicitly target the articulation root in the USD.
-    # The V2 asset places the articulation under '/MASTER'.
-    articulation_root_prim_path="/MASTER",
+    prim_path="/World/Master",
+    # Let Isaac Lab auto-discover the articulation root in the USD.
+    # If needed, set to an explicit path like "/MASTER" once verified in-stage.
+    articulation_root_prim_path=None,
 
     spawn=sim_utils.UsdFileCfg(
         # Note: filename is case-sensitive; use the exact V2 variant present on disk.
@@ -34,20 +34,28 @@ OpenMuttCfg = ArticulationCfg(
         rot=(0.0, 0.0, 0.0, 1.0),  # rotate +90 deg about X to stand upright (quaternion)
         lin_vel=(0.0, 0.0, 0.0),
         ang_vel=(0.0, 0.0, 0.0),
-        # Home pose from RViz screenshot, rounded to nearest 0.5 rad.
+        # Default pose set to midpoints of joint limits to satisfy validator.
         joint_pos={
             "Body_Bearing_2_Revolute_25": 0.0,
             "Body_Bearing_1_Revolute_63": 0.0,
             "Body_Bearing_3_Revolute_64": 0.0,
             "Body_Bearing_4_Revolute_65": 0.0,
-            "Cycloidal_Simplified_for_FEA_v1_2_Revolute_99": -1.0,
-            "Cycloidal_Simplified_for_FEA_v1_3_Revolute_100": 1.0,
-            "Cycloidal_Simplified_for_FEA_v1_4_4_2_Revolute_101": 1.0,
-            "Cycloidal_Simplified_for_FEA_v1_4_2_Revolute_102": 1.0,
+            # Midpoints from reported limits
+            # 99: [-1.0, 0.5] -> -0.25
+            "Cycloidal_Simplified_for_FEA_v1_2_Revolute_99": -0.25,
+            # 100: [-0.5, 1.0] -> 0.25
+            "Cycloidal_Simplified_for_FEA_v1_3_Revolute_100": 0.25,
+            # 101: [-1.0, 0.5] -> -0.25
+            "Cycloidal_Simplified_for_FEA_v1_4_4_2_Revolute_101": -0.25,
+            # 102: [-0.5, 1.0] -> 0.25
+            "Cycloidal_Simplified_for_FEA_v1_4_2_Revolute_102": 0.25,
+            # The following limits were not reported; keep current if valid.
             "Leg_Shank_Bushing_2_1_Revolute_103": -1.5,
             "Leg_Shank_Bushing_2_Revolute_104": 1.0,
-            "Leg_Shank_Bushing_1_Revolute_105": -1.5,
-            "Leg_Shank_Bushing_2_1_1_Revolute_106": 1.5,
+            # 105: [-1.5, 0.0] -> -0.75
+            "Leg_Shank_Bushing_1_Revolute_105": -0.75,
+            # 106: [0.0, 1.5] -> 0.75
+            "Leg_Shank_Bushing_2_1_1_Revolute_106": 0.75,
         },
         joint_vel={".*": 0.0},
     ),
