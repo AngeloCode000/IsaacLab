@@ -25,6 +25,8 @@ class OpenMuttRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
 
         # swap in the OpenMutt articulation and map it to the environment namespace
         self.scene.robot = OpenMuttCfg.replace(prim_path="{ENV_REGEX_NS}/Robot")
+        # Provide a nominal base height for rewards (matches OpenMutt target stance).
+        self.default_base_height = 0.35
 
         # align sensor attachments with the robot's base link
         if self.scene.height_scanner is not None:

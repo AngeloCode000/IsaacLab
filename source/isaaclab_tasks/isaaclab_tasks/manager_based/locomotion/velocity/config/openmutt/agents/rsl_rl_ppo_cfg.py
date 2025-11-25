@@ -16,6 +16,8 @@ class OpenMuttRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     max_iterations = 1500
     save_interval = 100
     experiment_name = "openmutt_rough"
+    # Bound raw policy outputs; the env wrapper clamps actions before they hit the action manager.
+    clip_actions = 1.0
     policy = RslRlPpoActorCriticCfg(
         init_noise_std=1.0,
         actor_obs_normalization=False,
