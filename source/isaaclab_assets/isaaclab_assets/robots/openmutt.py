@@ -9,11 +9,13 @@ OpenMuttCfg = ArticulationCfg(
     prim_path="/World/Master",
     # Let Isaac Lab auto-discover the articulation root in the USD.
     # If needed, set to an explicit path like "/MASTER" once verified in-stage.
-    articulation_root_prim_path=None,
+    # The crawl-break USD flattens its default prim into the target prim,
+    # so the base link lives at "<prim_path>/base_link". Make that the articulation root explicitly.
+    articulation_root_prim_path="/base_link",
 
     spawn=sim_utils.UsdFileCfg(
-        # Note: filename is case-sensitive; use the exact V2 variant present on disk.
-        usd_path="/home/eppl/Downloads/OpenMuttURDF_Master_Revolute/openmutt_master_revolute_absSTAGEV2.usd",
+        # Note: filename is case-sensitive; use the crawl-break variant present on disk.
+        usd_path="/home/eppl/Downloads/OpenMuttURDF_Master_Revolute/openmutt_master_revolute_crawlbreak/openmutt_master_revolute_absCB/openmutt_master_revolute_absCB.usd",
         activate_contact_sensors=True,
         # Ensure the robot is simulated with gravity and not anchored to the world.
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
@@ -40,15 +42,15 @@ OpenMuttCfg = ArticulationCfg(
             "Body_Bearing_1_Revolute_63": 0.0,
             "Body_Bearing_3_Revolute_64": 0.0,
             "Body_Bearing_4_Revolute_65": 0.0,
-            # Midpoints from reported limits
-            # 99: [-1.0, 0.5] -> -0.25
-            "Cycloidal_Simplified_for_FEA_v1_2_Revolute_99": -0.25,
+            # Midpoints from reported limits (radians)
+            # 99: [-1.0, -0.4] -> -0.7
+            "Cycloidal_Simplified_for_FEA_v1_2_Revolute_99": -0.7,
             # 100: [-0.5, 1.0] -> 0.25
             "Cycloidal_Simplified_for_FEA_v1_3_Revolute_100": 0.25,
-            # 101: [-1.0, 0.5] -> -0.25
-            "Cycloidal_Simplified_for_FEA_v1_4_4_2_Revolute_101": -0.25,
-            # 102: [-0.5, 1.0] -> 0.25
-            "Cycloidal_Simplified_for_FEA_v1_4_2_Revolute_102": 0.25,
+            # 101: [-1.0, -0.4] -> -0.7
+            "Cycloidal_Simplified_for_FEA_v1_4_4_2_Revolute_101": -0.7,
+            # 102: [0.4, 1.0] -> 0.7
+            "Cycloidal_Simplified_for_FEA_v1_4_2_Revolute_102": 0.7,
             # The following limits were not reported; keep current if valid.
             "Leg_Shank_Bushing_2_1_Revolute_103": -1.5,
             "Leg_Shank_Bushing_2_Revolute_104": 1.0,
