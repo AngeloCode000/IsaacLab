@@ -6,16 +6,13 @@ from isaaclab.assets.articulation import ArticulationCfg
 
 OpenMuttCfg = ArticulationCfg(
     # Place robot under the standard env namespace; let tasks clone it per env
-    prim_path="/World/Master",
-    # Let Isaac Lab auto-discover the articulation root in the USD.
-    # If needed, set to an explicit path like "/MASTER" once verified in-stage.
-    # The crawl-break USD flattens its default prim into the target prim,
-    # so the base link lives at "<prim_path>/base_link". Make that the articulation root explicitly.
-    articulation_root_prim_path="/base_link",
+    prim_path="/World/MASTER",
+    # Stankyleg stage keeps MASTER in the hierarchy; articulation root is the base link under MASTER.
+    articulation_root_prim_path="/MASTER/base_link",
 
     spawn=sim_utils.UsdFileCfg(
-        # Note: filename is case-sensitive; use the crawl-break variant present on disk.
-        usd_path="/home/eppl/Downloads/OpenMuttURDF_Master_Revolute/openmutt_master_revolute_crawlbreak/openmutt_master_revolute_absCB/openmutt_master_revolute_absCB.usd",
+        # Note: filename is case-sensitive; use the newer STANKYLEG crawl-break variant present on disk.
+        usd_path="/home/eppl/Downloads/OpenMuttURDF_Master_Revolute/openmutt_master_revolute_crawlbreak/openmutt_master_revolute_absCB/openmutt_master_revolute_absSTANKYLEG_stage.usd",
         activate_contact_sensors=True,
         # Ensure the robot is simulated with gravity and not anchored to the world.
         rigid_props=sim_utils.RigidBodyPropertiesCfg(

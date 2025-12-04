@@ -20,9 +20,9 @@ from pxr import Usd, UsdPhysics
 def main():
     usd_path = os.environ.get(
         "USD_PATH",
-        "/home/eppl/Downloads/OpenMuttURDF_Master_Revolute/openmutt_master_revolute_crawlbreak/openmutt_master_revolute_absCB/openmutt_master_revolute_absCB.usd",
+        "/home/eppl/Downloads/OpenMuttURDF_Master_Revolute/openmutt_master_revolute_crawlbreak/openmutt_master_revolute_absCB/openmutt_master_revolute_absSTANKYLEG_stage.usd",
     )
-    prim_path = os.environ.get("PRIM_PATH", "/MASTER/base_link")
+    prim_path = os.environ.get("PRIM_PATH", "/World/MASTER/base_link")
 
     if not os.path.isfile(usd_path):
         print(f"[ERROR] USD not found: {usd_path}")
