@@ -137,15 +137,29 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # wrap around environment for rsl-rl
     env = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
 
-    # set up keyboard controller for base velocity commands
-    kb = Se2Keyboard(Se2KeyboardCfg(sim_device=env.unwrapped.device))
+    # prepare keyboard controller for base velocity commands
     cmd_term = None
+    kb_cfg = Se2KeyboardCfg(sim_device=env.unwrapped.device)
     if hasattr(env.unwrapped, "command_manager"):
         try:
             cmd_term = env.unwrapped.command_manager.get_term("base_velocity")
+            ranges = cmd_term.cfg.ranges
+            # scale keyboard to trained command ranges so teleop matches policy expectations
+            kb_cfg.v_x_sensitivity = max(abs(r) for r in ranges.lin_vel_x)
+            kb_cfg.v_y_sensitivity = max(abs(r) for r in ranges.lin_vel_y)
+            kb_cfg.omega_z_sensitivity = max(abs(r) for r in ranges.ang_vel_z)
+            # avoid standing overrides so teleop commands persist
+            cmd_term.cfg.rel_standing_envs = 0.0
+            cmd_term.is_standing_env[:] = False
+            # if heading commands are enabled, keep them active and mark all envs as heading-controlled
+            cmd_term.is_heading_env[:] = cmd_term.cfg.heading_command
             print("[INFO] Keyboard teleop active: W/S forward/back, A/D yaw, Arrow keys also supported.")
         except KeyError:
             print("[WARN] No 'base_velocity' command term found; keyboard teleop disabled.")
+    else:
+        print("[WARN] No command manager found; keyboard teleop disabled.")
+
+    kb = Se2Keyboard(kb_cfg)
 
     print(f"[INFO]: Loading model checkpoint from: {resume_path}")
     # load previously trained model
@@ -191,7 +205,17 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         # Apply keyboard command to the command generator (if available)
         if cmd_term is not None:
             user_cmd = kb.advance()  # (3,) tensor on sim_device
-            cmd_term.vel_command_b[:] = user_cmd.unsqueeze(0).repeat(env.unwrapped.num_envs, 1)
+            cmd_term.is_standing_env[:] = False
+            if cmd_term.cfg.heading_command:
+                # integrate yaw input into heading target and let the heading controller convert to angular velocity
+                cmd_term.is_heading_env[:] = True
+                cmd_term.heading_target += user_cmd[2] * env.unwrapped.step_dt
+                cmd_term.vel_command_b[:, 2] = 0.0
+            else:
+                cmd_term.is_heading_env[:] = False
+                cmd_term.vel_command_b[:, 2] = user_cmd[2]
+
+            cmd_term.vel_command_b[:, :2] = user_cmd[:2]
             # keep a large time_left to avoid resampling overriding user input
             cmd_term.time_left[:] = 1e9
 
